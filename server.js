@@ -3,22 +3,34 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// CORS Issue Fix: Allow all origins and methods
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
-// 1. MongoDB Connection (Apna MongoDB URL yahan dalein)
-const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://YOUR_MONGO_URL_HERE";
+// Server Warm-up Route (Render Sleep Mode Fix)
+app.get('/', (req, res) => {
+  res.send('SHIBA Backend is active and running!');
+});
+
+// 1. MongoDB Connection
+const MONGO_URI = process.env.MONGO_URI || "YOUR_MONGO_URL_HERE";
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected Successfully for SHIBA App"))
   .catch(err => console.error("MongoDB Connection Error:", err));
 
-// 2. Withdrawal Schema (App Tagning ke saath)
+// 2. Withdrawal Schema
 const withdrawalSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   binanceId: { type: String, required: true },
   amount: { type: Number, required: true },
-  app: { type: String, default: 'SHIBA' }, // Multi-app Filter Tag
+  app: { type: String, default: 'SHIBA' },
   tokenType: { type: String, default: 'SHIBA' },
   status: { type: String, default: 'Pending' },
   createdAt: { type: Date, default: Date.now }
@@ -26,7 +38,7 @@ const withdrawalSchema = new mongoose.Schema({
 
 const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
 
-// 3. API: User Withdrawal Request Receive Karna
+// 3. API: Submit Withdrawal Request
 app.post('/api/withdraw', async (req, res) => {
   try {
     const { userId, binanceId, amount } = req.body;
@@ -51,10 +63,9 @@ app.post('/api/withdraw', async (req, res) => {
   }
 });
 
-// 4. API: Filtered Admin Data (Sirf SHIBA Apps ki requests bhejna)
+// 4. API: Admin Data Fetching
 app.get('/api/withdrawals', async (req, res) => {
   try {
-    // Strictly filtering requests where app or tokenType is SHIBA
     const shibaRequests = await Withdrawal.find({ 
       $or: [{ app: 'SHIBA' }, { tokenType: 'SHIBA' }] 
     }).sort({ createdAt: -1 });
@@ -65,7 +76,7 @@ app.get('/api/withdrawals', async (req, res) => {
   }
 });
 
-// 5. API: Status Update (Approve / Reject)
+// 5. API: Status Update
 app.put('/api/withdrawals/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -83,7 +94,6 @@ app.put('/api/withdrawals/:id', async (req, res) => {
   }
 });
 
-// Server Listen
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
