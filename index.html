@@ -349,21 +349,17 @@
 
   <!-- MAIN USER VIEW -->
   <div id="user-view" class="app-container">
-    
-    <!-- Top Balance Box -->
     <div class="balance-box">
       <img src="photo_2026-09-11_20-06-06.jpg" alt="SHIBA" class="shiba-mini-logo">
       <span class="balance-text" id="balance-display">0</span>
     </div>
 
-    <!-- Center Coin Logo Tap Area -->
     <div class="tap-area">
       <div class="tap-button" id="tap-btn">
         <img src="photo_2026-09-11_20-06-06.jpg" alt="SHIBA INU">
       </div>
     </div>
 
-    <!-- 500 XP Line Bar -->
     <div class="progress-container">
       <div class="energy-text">
         <span>⚡ XP Line</span>
@@ -374,13 +370,11 @@
       </div>
     </div>
 
-    <!-- Action Buttons -->
     <div class="actions-grid">
       <button class="btn" onclick="openModal('withdraw-modal')">💸 Withdraw</button>
       <button class="btn" onclick="openModal('task-modal')">🎯 Task</button>
     </div>
 
-    <!-- Watch Ads Button -->
     <button class="btn-ads" id="ad-btn" onclick="openModal('ad-popup-modal')">🎬 Watch Ads Get 500XP</button>
   </div>
 
@@ -466,7 +460,6 @@
     updateUI();
     initTaskUI();
 
-    // Tapping Engine: 1 Tap = -10 XP, +1 SHIBA Coin
     tapBtn.addEventListener('click', (e) => {
       if (xp < 10) {
         alert('Not enough XP! Watch Ads to get +500 XP.');
@@ -481,7 +474,6 @@
       createFloatingText(e, "+1 SHIBA");
     });
 
-    // Monetag Rewarded Ad Handler with 10s Timer Fallback
     function triggerMonetagAd() {
       closeModal('ad-popup-modal');
       isAdActive = true;
@@ -518,7 +510,6 @@
     });
     window.addEventListener("focus", verifyAdReward);
 
-    // TON Refer Task Handler
     function initTaskUI() {
       const taskBtn = document.getElementById('ton-task-btn');
       if (tonTaskStatus === 'claim') {
@@ -585,7 +576,6 @@
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
-    // Withdrawal Submission with SHIBA App Identifier
     async function submitWithdrawal() {
       const binanceId = document.getElementById('binance-id-input').value.trim();
       const amount = parseInt(document.getElementById('withdraw-amount-input').value);
@@ -633,7 +623,7 @@
       }
     }
 
-    // Admin Panel Routing & Strict SHIBA Filter
+    // Admin Panel Route
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('admin') === 'true') {
       document.getElementById('user-view').style.display = 'none';
@@ -641,27 +631,51 @@
       fetchAdminRequests();
     }
 
+    // UPDATED Admin Fetch Function
     async function fetchAdminRequests() {
+      const container = document.getElementById('admin-requests-list');
+      container.innerHTML = '<div style="text-align:center; padding: 20px; color: #ff9500;">Connecting to Server... Please wait.</div>';
+
       try {
-        let res = await fetch(`${BACKEND_URL}/api/withdrawals`);
-        if (!res.ok) res = await fetch(`${BACKEND_URL}/api/bonk/withdrawals`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const res = await fetch(`${BACKEND_URL}/api/withdrawals`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          throw new Error(`Server status: ${res.status}`);
+        }
+
         const requests = await res.json();
         
         if (!Array.isArray(requests)) {
-            document.getElementById('admin-requests-list').innerText = 'No requests found.';
-            return;
+          container.innerText = 'No valid data received.';
+          return;
         }
 
-        // Strict Filter: Sirf SHIBA requests hi dikhenge
         const shibaOnlyRequests = requests.filter(req => {
-          const app = (req.tokenType || req.app || req.coinType || req.token || '').toString().toUpperCase();
+          const app = (req.tokenType || req.app || '').toString().toUpperCase();
           return app.includes('SHIBA'); 
         });
 
         renderAdminRequests(shibaOnlyRequests);
       } catch (err) {
         console.error("Fetch Admin Error:", err);
-        document.getElementById('admin-requests-list').innerText = 'Failed to load requests.';
+        if (err.name === 'AbortError') {
+          container.innerHTML = `<div style="color: #ff3b30; text-align: center; padding: 20px;">
+            <b>Server Timeout!</b><br>Render Backend starting me time le raha hai. Ek baar page Refresh karein.
+          </div>`;
+        } else {
+          container.innerHTML = `<div style="color: #ff3b30; text-align: center; padding: 20px;">
+            <b>Connection Error!</b><br>Failed to fetch data: ${err.message}
+          </div>`;
+        }
       }
     }
 
@@ -709,36 +723,22 @@
         return;
       }
 
-      const endpoints = [
-        { url: `${BACKEND_URL}/api/withdrawals/${id}`, method: 'PUT', body: { status: newStatus } },
-        { url: `${BACKEND_URL}/api/withdrawals/status`, method: 'PUT', body: { id, status: newStatus } },
-        { url: `${BACKEND_URL}/api/withdraw/status`, method: 'POST', body: { id, status: newStatus } },
-        { url: `${BACKEND_URL}/api/withdrawals/update`, method: 'POST', body: { id, status: newStatus } }
-      ];
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/withdrawals/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
 
-      let updated = false;
-
-      for (let endpoint of endpoints) {
-        try {
-          const res = await fetch(endpoint.url, {
-            method: endpoint.method,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(endpoint.body)
-          });
-
-          if (res.ok) {
-            alert(`✅ Status updated to ${newStatus}`);
-            updated = true;
-            fetchAdminRequests();
-            break;
-          }
-        } catch (e) {
-          console.log(`Failed endpoint: ${endpoint.url}`);
+        if (res.ok) {
+          alert(`✅ Status updated to ${newStatus}`);
+          fetchAdminRequests();
+        } else {
+          alert("Server Error: Unable to update status.");
         }
-      }
-
-      if (!updated) {
-        alert("Server Error: Unable to update status.");
+      } catch (e) {
+        console.error("Update error:", e);
+        alert("Network Error while updating status.");
       }
     }
   </script>
