@@ -3,29 +3,17 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-
-// CORS Issue Fix: Allow all origins and methods
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
-
+app.use(cors());
 app.use(express.json());
 
-// Server Warm-up Route (Render Sleep Mode Fix)
-app.get('/', (req, res) => {
-  res.send('SHIBA Backend is active and running!');
-});
-
 // 1. MongoDB Connection
-const MONGO_URI = process.env.MONGO_URI || "YOUR_MONGO_URL_HERE";
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://dhrutivirani907:YOUR_PASSWORD@cluster0.mongodb.net/shiba_app?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI)
-  .then(() => console.log("MongoDB Connected Successfully for SHIBA App"))
-  .catch(err => console.error("MongoDB Connection Error:", err));
+  .then(() => console.log("✅ MongoDB Connected Successfully"))
+  .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 
-// 2. Withdrawal Schema
+// 2. Schema & Model Definition
 const withdrawalSchema = new mongoose.Schema({
   userId: { type: String, required: true },
   binanceId: { type: String, required: true },
@@ -38,63 +26,70 @@ const withdrawalSchema = new mongoose.Schema({
 
 const Withdrawal = mongoose.model('Withdrawal', withdrawalSchema);
 
-// 3. API: Submit Withdrawal Request
+// 3. API Routes
+
+// Health Check
+app.get('/', (req, res) => {
+  res.send('SHIBA Tap App Backend Server Running Perfectly!');
+});
+
+// Submit Withdrawal Request
 app.post('/api/withdraw', async (req, res) => {
   try {
-    const { userId, binanceId, amount } = req.body;
+    const { userId, binanceId, amount, wallet, tokenType, app: appName } = req.body;
+    const finalBinanceId = binanceId || wallet;
 
-    if (!userId || !binanceId || !amount) {
-      return res.status(400).json({ success: false, message: "All fields are required" });
+    if (!userId || !finalBinanceId || !amount) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
     }
 
     const newRequest = new Withdrawal({
-      userId,
-      binanceId,
-      amount,
-      app: 'SHIBA',
-      tokenType: 'SHIBA',
+      userId: userId,
+      binanceId: finalBinanceId,
+      amount: Number(amount),
+      app: appName || 'SHIBA',
+      tokenType: tokenType || 'SHIBA',
       status: 'Pending'
     });
 
     await newRequest.save();
-    res.json({ success: true, message: "Withdrawal request saved!" });
+    console.log("✅ New Withdrawal Saved:", newRequest);
+
+    res.json({ success: true, message: "Withdrawal request submitted successfully!" });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error("❌ Database Save Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// 4. API: Admin Data Fetching
+// Fetch All Withdrawal Requests for Admin
 app.get('/api/withdrawals', async (req, res) => {
   try {
-    const shibaRequests = await Withdrawal.find({ 
-      $or: [{ app: 'SHIBA' }, { tokenType: 'SHIBA' }] 
-    }).sort({ createdAt: -1 });
-
-    res.json(shibaRequests);
+    const requests = await Withdrawal.find().sort({ createdAt: -1 });
+    res.json(requests);
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    console.error("❌ Fetch Error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// 5. API: Status Update
-app.put('/api/withdrawals/:id', async (req, res) => {
+// Approve or Reject Withdrawal
+app.post('/api/admin/update-status', async (req, res) => {
   try {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    const updated = await Withdrawal.findByIdAndUpdate(id, { status }, { new: true });
-    
-    if (!updated) {
-      return res.status(404).json({ success: false, message: "Request not found" });
+    const { id, status } = req.body;
+    if (!id || !status) {
+      return res.status(400).json({ success: false, message: "ID and Status required" });
     }
 
-    res.json({ success: true, updated });
+    await Withdrawal.findByIdAndUpdate(id, { status: status });
+    res.json({ success: true, message: `Status updated to ${status}` });
   } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, message: error.message });
   }
 });
 
+// Server Listen
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
