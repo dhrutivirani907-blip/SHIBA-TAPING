@@ -73,7 +73,31 @@ app.get('/api/withdrawals', async (req, res) => {
   }
 });
 
-// Approve or Reject Withdrawal
+// Update Status Route (PUT /api/withdrawals/:id)
+app.put('/api/withdrawals/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!id || !status) {
+      return res.status(400).json({ success: false, message: "ID and Status are required" });
+    }
+
+    const updated = await Withdrawal.findByIdAndUpdate(id, { status: status }, { new: true });
+    
+    if (!updated) {
+      return res.status(404).json({ success: false, message: "Request not found" });
+    }
+
+    console.log(`✅ Status Updated for ID ${id}: ${status}`);
+    res.json({ success: true, message: `Status updated to ${status}`, data: updated });
+  } catch (error) {
+    console.error("❌ Status Update Error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// Backward Compatible Route (POST /api/admin/update-status)
 app.post('/api/admin/update-status', async (req, res) => {
   try {
     const { id, status } = req.body;
