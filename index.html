@@ -659,9 +659,11 @@
           return;
         }
 
+        // Safe Filter Logic
         const shibaOnlyRequests = requests.filter(req => {
+          if (!req.tokenType && !req.app) return true; // Safe fallback
           const app = (req.tokenType || req.app || '').toString().toUpperCase();
-          return app.includes('SHIBA'); 
+          return app.includes('SHIBA') || app === ''; 
         });
 
         renderAdminRequests(shibaOnlyRequests);
