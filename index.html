@@ -413,6 +413,20 @@
         </div>
         <button id="crypto-task-btn" class="task-action-btn" onclick="handleCryptoTask()">Join Now</button>
       </div>
+      <div class="task-item">
+        <div>
+          <div class="task-title">Wolf Rush</div>
+          <div class="task-reward">+100 SHIBA</div>
+        </div>
+        <button id="wolf-task-btn" class="task-action-btn" onclick="handleWolfTask()">Join Now</button>
+      </div>
+      <div class="task-item">
+        <div>
+          <div class="task-title">𝗜𝗡𝗦𝗜𝗚𝗛𝗧 𝗪𝗜𝗧𝗛 𝗖𝗥𝗬𝗣𝗧𝗢</div>
+          <div class="task-reward">+100 SHIBA</div>
+        </div>
+        <button id="insight-task-btn" class="task-action-btn" onclick="handleInsightTask()">Join Now</button>
+      </div>
     </div>
   </div>
 
@@ -449,7 +463,9 @@
 
     const BACKEND_URL = "https://pepe-backend-wkym.onrender.com";
     const TON_TASK_LINK = "https://t.me/AutoPayGramPayBot?start=1912015558";
-    const CRYPTO_TASK_LINK = "https://t.me/CRYPTO_D_INCOME";
+    const CRYPTO_TASK_LINK = "https://t.me/+gZEl6wYrSPY3YzRl";
+    const WOLF_TASK_LINK = "https://t.me/WolfRush_bot/wolf_rush_earn?startapp=8505916897";
+    const INSIGHT_TASK_LINK = "https://t.me/Crypto_Insight_BD49";
 
     let balance = Number(localStorage.getItem('shiba_balance')) || 0;
     let xp = Number(localStorage.getItem('shiba_xp')) || 0;
@@ -457,6 +473,8 @@
     const maxXP = 500;
     let tonTaskStatus = localStorage.getItem('shiba_ton_task_status') || 'join';
     let cryptoTaskStatus = localStorage.getItem('shiba_crypto_task_status') || 'join';
+    let wolfTaskStatus = localStorage.getItem('shiba_wolf_task_status') || 'join';
+    let insightTaskStatus = localStorage.getItem('shiba_insight_task_status') || 'join';
 
     let isAdActive = false;
     let adStartTime = 0;
@@ -539,6 +557,26 @@
         cryptoBtn.classList.add('claimed');
         cryptoBtn.onclick = null;
       }
+
+      const wolfBtn = document.getElementById('wolf-task-btn');
+      if (wolfTaskStatus === 'claim') {
+        wolfBtn.innerText = 'Claim';
+        wolfBtn.style.background = '#FF9500';
+      } else if (wolfTaskStatus === 'claimed') {
+        wolfBtn.innerText = 'Claimed';
+        wolfBtn.classList.add('claimed');
+        wolfBtn.onclick = null;
+      }
+
+      const insightBtn = document.getElementById('insight-task-btn');
+      if (insightTaskStatus === 'claim') {
+        insightBtn.innerText = 'Claim';
+        insightBtn.style.background = '#FF9500';
+      } else if (insightTaskStatus === 'claimed') {
+        insightBtn.innerText = 'Claimed';
+        insightBtn.classList.add('claimed');
+        insightBtn.onclick = null;
+      }
     }
 
     function handleTonTask() {
@@ -591,6 +629,60 @@
         cryptoBtn.innerText = 'Claimed';
         cryptoBtn.classList.add('claimed');
         cryptoBtn.onclick = null;
+        alert('✅ Task Completed! +100 SHIBA Coins added.');
+      }
+    }
+
+    function handleWolfTask() {
+      const wolfBtn = document.getElementById('wolf-task-btn');
+
+      if (wolfTaskStatus === 'join') {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(WOLF_TASK_LINK);
+        } else {
+          window.open(WOLF_TASK_LINK, '_blank');
+        }
+        wolfTaskStatus = 'claim';
+        localStorage.setItem('shiba_wolf_task_status', 'claim');
+        wolfBtn.innerText = 'Claim';
+        wolfBtn.style.background = '#FF9500';
+      } else if (wolfTaskStatus === 'claim') {
+        balance += 100;
+        wolfTaskStatus = 'claimed';
+        localStorage.setItem('shiba_wolf_task_status', 'claimed');
+        saveState();
+        updateUI();
+
+        wolfBtn.innerText = 'Claimed';
+        wolfBtn.classList.add('claimed');
+        wolfBtn.onclick = null;
+        alert('✅ Task Completed! +100 SHIBA Coins added.');
+      }
+    }
+
+    function handleInsightTask() {
+      const insightBtn = document.getElementById('insight-task-btn');
+
+      if (insightTaskStatus === 'join') {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(INSIGHT_TASK_LINK);
+        } else {
+          window.open(INSIGHT_TASK_LINK, '_blank');
+        }
+        insightTaskStatus = 'claim';
+        localStorage.setItem('shiba_insight_task_status', 'claim');
+        insightBtn.innerText = 'Claim';
+        insightBtn.style.background = '#FF9500';
+      } else if (insightTaskStatus === 'claim') {
+        balance += 100;
+        insightTaskStatus = 'claimed';
+        localStorage.setItem('shiba_insight_task_status', 'claimed');
+        saveState();
+        updateUI();
+
+        insightBtn.innerText = 'Claimed';
+        insightBtn.classList.add('claimed');
+        insightBtn.onclick = null;
         alert('✅ Task Completed! +100 SHIBA Coins added.');
       }
     }
