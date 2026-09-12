@@ -8,8 +8,8 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Monetag Ads SDK Script -->
-  <script src='//libtl.com/sdk.js' data-zone='11766459' data-sdk='show_11766459'></script>
+  <!-- Adsgram Ads SDK Script -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
   <style>
     * {
@@ -188,6 +188,14 @@
 
     .btn-ads:active { opacity: 0.9; }
 
+    .adsgram-tag {
+      font-size: 11px;
+      color: #888888;
+      margin-top: 6px;
+      text-align: center;
+      letter-spacing: 0.5px;
+    }
+
     .modal {
       display: none;
       position: fixed;
@@ -363,7 +371,7 @@
     <div class="progress-container">
       <div class="energy-text">
         <span>⚡ XP Line</span>
-        <span id="energy-display">0 / 500 XP</span>
+        <span id="energy-display">0 / 5000 XP</span>
       </div>
       <div class="progress-bar">
         <div class="progress-fill" id="energy-bar"></div>
@@ -375,21 +383,8 @@
       <button class="btn" onclick="openModal('task-modal')">🎯 Task</button>
     </div>
 
-    <button class="btn-ads" id="ad-btn" onclick="openModal('ad-popup-modal')">🎬 Watch Ads Get 500XP</button>
-  </div>
-
-  <!-- ADS NOTICE POPUP MODAL -->
-  <div class="modal" id="ad-popup-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Watch Video Ad</h3>
-        <span class="close-btn" onclick="closeModal('ad-popup-modal')">&times;</span>
-      </div>
-      <div class="notice-box">
-        ⚠️ <b>Notice:</b> Please watch the ad for minimum <b>10 seconds</b>. If you return back earlier, reward (+500 XP) will not be added.
-      </div>
-      <button class="submit-btn" onclick="triggerMonetagAd()">▶ Watch Ad Now</button>
-    </div>
+    <button class="btn-ads" id="ad-btn" onclick="triggerAdsgramAd()">🎬 Watch Ads Get 5000XP (<span id="ad-count">0</span>/10)</button>
+    <div class="adsgram-tag">Ads by Adsgram</div>
   </div>
 
   <!-- TASK MODAL -->
@@ -467,29 +462,42 @@
     const WOLF_TASK_LINK = "https://t.me/WolfRush_bot/wolf_rush_earn?startapp=8505916897";
     const INSIGHT_TASK_LINK = "https://t.me/Crypto_Insight_BD49";
 
+    // ADSGRAM BLOCK ID PLACEHOLDER
+    const ADSGRAM_BLOCK_ID = "YOUR_ADSGRAM_BLOCK_ID"; 
+
     let balance = Number(localStorage.getItem('shiba_balance')) || 0;
     let xp = Number(localStorage.getItem('shiba_xp')) || 0;
 
-    const maxXP = 500;
+    const maxXP = 5000;
     let tonTaskStatus = localStorage.getItem('shiba_ton_task_status') || 'join';
     let cryptoTaskStatus = localStorage.getItem('shiba_crypto_task_status') || 'join';
     let wolfTaskStatus = localStorage.getItem('shiba_wolf_task_status') || 'join';
     let insightTaskStatus = localStorage.getItem('shiba_insight_task_status') || 'join';
 
-    let isAdActive = false;
-    let adStartTime = 0;
+    // Daily Ads Limit Logic (10 Ads per 24 Hours)
+    let dailyAdCount = Number(localStorage.getItem('shiba_daily_ad_count')) || 0;
+    let lastAdResetTime = Number(localStorage.getItem('shiba_last_ad_reset')) || Date.now();
+
+    // Check 24 Hours Reset
+    if (Date.now() - lastAdResetTime > 24 * 60 * 60 * 1000) {
+      dailyAdCount = 0;
+      lastAdResetTime = Date.now();
+      localStorage.setItem('shiba_daily_ad_count', 0);
+      localStorage.setItem('shiba_last_ad_reset', lastAdResetTime);
+    }
 
     const balanceDisplay = document.getElementById('balance-display');
     const energyDisplay = document.getElementById('energy-display');
     const energyBar = document.getElementById('energy-bar');
     const tapBtn = document.getElementById('tap-btn');
+    const adCountDisplay = document.getElementById('ad-count');
 
     updateUI();
     initTaskUI();
 
     tapBtn.addEventListener('click', (e) => {
       if (xp < 10) {
-        alert('Not enough XP! Watch Ads to get +500 XP.');
+        alert('Not enough XP! Watch Ads to get +5000 XP.');
         return;
       }
 
@@ -501,41 +509,35 @@
       createFloatingText(e, "+1 SHIBA");
     });
 
-    function triggerMonetagAd() {
-      closeModal('ad-popup-modal');
-      isAdActive = true;
-      adStartTime = Date.now();
+    // ADSGRAM TRIGGER FUNCTION
+    function triggerAdsgramAd() {
+      if (dailyAdCount >= 10) {
+        alert('❌ Daily Limit Reached! You have watched 10/10 ads today. Please try again after 24 hours.');
+        return;
+      }
 
-      if (typeof show_11766459 === 'function') {
-        show_11766459().then(() => {
-          verifyAdReward();
-        }).catch((err) => {
-          console.error("SDK Error, falling back to timer:", err);
+      if (window.Adsgram) {
+        const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+        
+        AdController.show().then((result) => {
+          // User completed watching the ad
+          xp = Math.min(maxXP, xp + 5000);
+          dailyAdCount++;
+          
+          localStorage.setItem('shiba_daily_ad_count', dailyAdCount);
+          saveState();
+          updateUI();
+          
+          alert('✅ Ad Completed! +5000 XP Added.');
+        }).catch((result) => {
+          // User skipped or error occurred
+          console.log("Ad status/error:", result);
+          alert('❌ Ad skipped or failed to load. Watch full ad to earn 5000 XP.');
         });
-      }
-    }
-
-    function verifyAdReward() {
-      if (!isAdActive) return;
-
-      const timeSpent = (Date.now() - adStartTime) / 1000;
-
-      if (timeSpent >= 10) {
-        xp = Math.min(maxXP, xp + 500);
-        saveState();
-        updateUI();
-        alert('✅ Ad Rewarded! +500 XP Added.');
       } else {
-        alert(`❌ Reward Failed! You watched for only ${Math.floor(timeSpent)}s. Minimum 10 seconds required.`);
+        alert('Adsgram SDK not initialized properly.');
       }
-
-      isAdActive = false;
     }
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") verifyAdReward();
-    });
-    window.addEventListener("focus", verifyAdReward);
 
     function initTaskUI() {
       const taskBtn = document.getElementById('ton-task-btn');
@@ -692,6 +694,7 @@
       energyDisplay.innerText = `${xp} / ${maxXP} XP`;
       const percentage = (xp / maxXP) * 100;
       energyBar.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
+      adCountDisplay.innerText = dailyAdCount;
     }
 
     function saveState() {
