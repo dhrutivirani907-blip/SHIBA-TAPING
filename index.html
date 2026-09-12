@@ -406,6 +406,13 @@
         </div>
         <button id="ton-task-btn" class="task-action-btn" onclick="handleTonTask()">Join Now</button>
       </div>
+      <div class="task-item">
+        <div>
+          <div class="task-title">Crypto Income</div>
+          <div class="task-reward">+100 SHIBA</div>
+        </div>
+        <button id="crypto-task-btn" class="task-action-btn" onclick="handleCryptoTask()">Join Now</button>
+      </div>
     </div>
   </div>
 
@@ -442,12 +449,14 @@
 
     const BACKEND_URL = "https://pepe-backend-wkym.onrender.com";
     const TON_TASK_LINK = "https://t.me/AutoPayGramPayBot?start=1912015558";
+    const CRYPTO_TASK_LINK = "https://t.me/CRYPTO_D_INCOME";
 
     let balance = Number(localStorage.getItem('shiba_balance')) || 0;
     let xp = Number(localStorage.getItem('shiba_xp')) || 0;
 
     const maxXP = 500;
     let tonTaskStatus = localStorage.getItem('shiba_ton_task_status') || 'join';
+    let cryptoTaskStatus = localStorage.getItem('shiba_crypto_task_status') || 'join';
 
     let isAdActive = false;
     let adStartTime = 0;
@@ -520,6 +529,16 @@
         taskBtn.classList.add('claimed');
         taskBtn.onclick = null;
       }
+
+      const cryptoBtn = document.getElementById('crypto-task-btn');
+      if (cryptoTaskStatus === 'claim') {
+        cryptoBtn.innerText = 'Claim';
+        cryptoBtn.style.background = '#FF9500';
+      } else if (cryptoTaskStatus === 'claimed') {
+        cryptoBtn.innerText = 'Claimed';
+        cryptoBtn.classList.add('claimed');
+        cryptoBtn.onclick = null;
+      }
     }
 
     function handleTonTask() {
@@ -545,6 +564,33 @@
         taskBtn.innerText = 'Claimed';
         taskBtn.classList.add('claimed');
         taskBtn.onclick = null;
+        alert('✅ Task Completed! +100 SHIBA Coins added.');
+      }
+    }
+
+    function handleCryptoTask() {
+      const cryptoBtn = document.getElementById('crypto-task-btn');
+
+      if (cryptoTaskStatus === 'join') {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(CRYPTO_TASK_LINK);
+        } else {
+          window.open(CRYPTO_TASK_LINK, '_blank');
+        }
+        cryptoTaskStatus = 'claim';
+        localStorage.setItem('shiba_crypto_task_status', 'claim');
+        cryptoBtn.innerText = 'Claim';
+        cryptoBtn.style.background = '#FF9500';
+      } else if (cryptoTaskStatus === 'claim') {
+        balance += 100;
+        cryptoTaskStatus = 'claimed';
+        localStorage.setItem('shiba_crypto_task_status', 'claimed');
+        saveState();
+        updateUI();
+
+        cryptoBtn.innerText = 'Claimed';
+        cryptoBtn.classList.add('claimed');
+        cryptoBtn.onclick = null;
         alert('✅ Task Completed! +100 SHIBA Coins added.');
       }
     }
