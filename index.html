@@ -3,13 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>SHIBA INU TAPPING GAME</title>
+  <title>SHIBA INU MINING GAME</title>
   
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- Adsgram Ads SDK Script -->
-  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
   <style>
     * {
@@ -70,82 +67,96 @@
       text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
     }
 
+    /* CENTER LOGO WITH GREEN GLOWING RING ANIMATION */
     .tap-area {
       position: relative;
-      margin: 25px 0 15px 0;
+      margin: 30px 0;
       display: flex;
       justify-content: center;
       align-items: center;
     }
 
-    .tap-button {
+    .shiba-avatar-container {
+      position: relative;
       width: 220px;
       height: 220px;
       border-radius: 50%;
-      background: radial-gradient(circle, #2B0003 0%, #0D0001 100%);
-      border: 4px solid #E50914;
       display: flex;
       justify-content: center;
       align-items: center;
-      box-shadow: 0 0 35px rgba(229, 9, 20, 0.5);
-      cursor: pointer;
-      transition: transform 0.05s ease;
+      background: radial-gradient(circle, #2B0003 0%, #0D0001 100%);
     }
 
-    .tap-button:active {
-      transform: scale(0.95);
+    /* Rotating Ring Element */
+    .glow-ring {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      right: -6px;
+      bottom: -6px;
+      border-radius: 50%;
+      border: 4px solid transparent;
+      transition: all 0.3s ease;
+      pointer-events: none;
     }
 
-    .tap-button img {
-      width: 180px;
-      height: 180px;
+    /* Active Green Premium Ring State */
+    .glow-ring.active {
+      border-top-color: #00FF66;
+      border-right-color: #00FF66;
+      border-bottom-color: rgba(0, 255, 102, 0.2);
+      border-left-color: rgba(0, 255, 102, 0.2);
+      box-shadow: 0 0 25px rgba(0, 255, 102, 0.6), inset 0 0 15px rgba(0, 255, 102, 0.4);
+      animation: spinRing 2s linear infinite;
+    }
+
+    /* Default Inactive Ring State */
+    .glow-ring.inactive {
+      border: 3px solid rgba(229, 9, 20, 0.4);
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.2);
+    }
+
+    @keyframes spinRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .shiba-avatar-container img {
+      width: 190px;
+      height: 190px;
       border-radius: 50%;
       pointer-events: none;
+      z-index: 2;
     }
 
-    .floating-text {
-      position: absolute;
-      font-size: 26px;
-      font-weight: bold;
-      color: #FF2E3B;
-      pointer-events: none;
-      animation: floatUp 0.8s ease-out forwards;
-      text-shadow: 0 0 8px rgba(0,0,0,0.8);
-    }
-
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-80px); }
-    }
-
-    .progress-container {
+    /* ACTIVE MINER BOX */
+    .miner-info-box {
       width: 100%;
-      margin-bottom: 20px;
-    }
-
-    .energy-text {
+      background: #140204;
+      border: 1px solid rgba(0, 255, 102, 0.4);
+      border-radius: 12px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
-      font-size: 13px;
-      color: #A0A0A0;
-      margin-bottom: 6px;
+      align-items: center;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.1);
+    }
+
+    .miner-info-title {
+      font-size: 14px;
       font-weight: 600;
+      color: #A0A0A0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .progress-bar {
-      width: 100%;
-      height: 12px;
-      background: #1A0507;
-      border-radius: 6px;
-      overflow: hidden;
-      border: 1px solid rgba(229, 9, 20, 0.3);
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #8B0000 0%, #E50914 100%);
-      width: 0%;
-      transition: width 0.2s ease;
+    .miner-info-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: #00FF66;
+      text-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
     }
 
     .actions-grid {
@@ -187,14 +198,6 @@
     }
 
     .btn-ads:active { opacity: 0.9; }
-
-    .adsgram-tag {
-      font-size: 11px;
-      color: #888888;
-      margin-top: 6px;
-      text-align: center;
-      letter-spacing: 0.5px;
-    }
 
     .modal {
       display: none;
@@ -362,20 +365,20 @@
       <span class="balance-text" id="balance-display">0</span>
     </div>
 
+    <!-- LOGO WITH ROTATING GLOW RING -->
     <div class="tap-area">
-      <div class="tap-button" id="tap-btn">
+      <div class="shiba-avatar-container">
+        <div id="glow-ring" class="glow-ring inactive"></div>
         <img src="photo_2026-09-11_20-06-06.jpg" alt="SHIBA INU">
       </div>
     </div>
 
-    <div class="progress-container">
-      <div class="energy-text">
-        <span>⚡ XP Line</span>
-        <span id="energy-display">0 / 5000 XP</span>
+    <!-- TOTAL ACTIVE MINERS DISPLAY -->
+    <div class="miner-info-box">
+      <div class="miner-info-title">
+        <span>⛏️ Total Active Miner:</span>
       </div>
-      <div class="progress-bar">
-        <div class="progress-fill" id="energy-bar"></div>
-      </div>
+      <div class="miner-info-value" id="active-miner-count">0</div>
     </div>
 
     <div class="actions-grid">
@@ -383,8 +386,21 @@
       <button class="btn" onclick="openModal('task-modal')">🎯 Task</button>
     </div>
 
-    <button class="btn-ads" id="ad-btn" onclick="triggerAdsgramAd()">🎬 Watch Ads Get 5000XP (<span id="ad-count">0</span>/10)</button>
-    <div class="adsgram-tag">Ads by Adsgram</div>
+    <button class="btn-ads" id="ad-btn" onclick="openModal('ad-prompt-modal')">🎬 Watch 25 Ads Unlock Miner (<span id="ad-count">0</span>/25)</button>
+  </div>
+
+  <!-- AD PROMPT MODAL -->
+  <div class="modal" id="ad-prompt-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Watch Ad to Unlock (<span id="modal-ad-count">0</span>/25)</h3>
+        <span class="close-btn" onclick="closeModal('ad-prompt-modal')">&times;</span>
+      </div>
+      <div class="notice-box">
+        ⚠️ Watch ad minimum 8 seconds. Agar 8 seconds se pehle wapas aaye toh count nahi hoga!
+      </div>
+      <button class="submit-btn" onclick="watchAdsterraAd()">🎬 Watch Ad Now</button>
+    </div>
   </div>
 
   <!-- TASK MODAL -->
@@ -462,82 +478,114 @@
     const WOLF_TASK_LINK = "https://t.me/WolfRush_bot/wolf_rush_earn?startapp=8505916897";
     const INSIGHT_TASK_LINK = "https://t.me/Crypto_Insight_BD49";
 
-    // UPDATED REAL ADSGRAM BLOCK ID
-    const ADSGRAM_BLOCK_ID = "int-47575"; 
+    // 🔽 AAPKA ADSTERRA DIRECT LINK SET KAR DIYA GAYA HAI 🔽
+    const ADSTERRA_DIRECT_LINK = "https://www.profitableratecpmnetwork.com/mag701y1?key=e6dcf81d34580abdf64766ac0be7e76d";
 
     let balance = Number(localStorage.getItem('shiba_balance')) || 0;
-    let xp = Number(localStorage.getItem('shiba_xp')) || 0;
+    let adProgressCount = Number(localStorage.getItem('shiba_ad_progress_count')) || 0;
+    
+    // Active Miners Array storing expiry timestamps
+    let activeMiners = JSON.parse(localStorage.getItem('shiba_active_miners')) || [];
 
-    const maxXP = 5000;
     let tonTaskStatus = localStorage.getItem('shiba_ton_task_status') || 'join';
     let cryptoTaskStatus = localStorage.getItem('shiba_crypto_task_status') || 'join';
     let wolfTaskStatus = localStorage.getItem('shiba_wolf_task_status') || 'join';
     let insightTaskStatus = localStorage.getItem('shiba_insight_task_status') || 'join';
 
-    // Daily Ads Limit Logic (10 Ads per 24 Hours)
-    let dailyAdCount = Number(localStorage.getItem('shiba_daily_ad_count')) || 0;
-    let lastAdResetTime = Number(localStorage.getItem('shiba_last_ad_reset')) || Date.now();
-
-    // Check 24 Hours Reset
-    if (Date.now() - lastAdResetTime > 24 * 60 * 60 * 1000) {
-      dailyAdCount = 0;
-      lastAdResetTime = Date.now();
-      localStorage.setItem('shiba_daily_ad_count', 0);
-      localStorage.setItem('shiba_last_ad_reset', lastAdResetTime);
-    }
-
     const balanceDisplay = document.getElementById('balance-display');
-    const energyDisplay = document.getElementById('energy-display');
-    const energyBar = document.getElementById('energy-bar');
-    const tapBtn = document.getElementById('tap-btn');
     const adCountDisplay = document.getElementById('ad-count');
+    const modalAdCountDisplay = document.getElementById('modal-ad-count');
+    const activeMinerCountDisplay = document.getElementById('active-miner-count');
+    const glowRing = document.getElementById('glow-ring');
+
+    let adStartTime = 0;
 
     updateUI();
     initTaskUI();
+    startMiningEngine();
 
-    tapBtn.addEventListener('click', (e) => {
-      if (xp < 10) {
-        alert('Not enough XP! Watch Ads to get +5000 XP.');
-        return;
-      }
+    // ADSTERRA DIRECT LINK WATCH LOGIC
+    function watchAdsterraAd() {
+      adStartTime = Date.now();
+      window.open(ADSTERRA_DIRECT_LINK, '_blank');
+      closeModal('ad-prompt-modal');
+    }
 
-      xp = Math.max(0, xp - 10);
-      balance += 1;
+    // CHECK TIME WHEN USER RETURNS TO TAB/APP
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && adStartTime > 0) {
+        const timeSpent = (Date.now() - adStartTime) / 1000;
+        adStartTime = 0; // Reset timer
 
-      saveState();
-      updateUI();
-      createFloatingText(e, "+1 SHIBA");
-    });
-
-    // ADSGRAM TRIGGER FUNCTION
-    function triggerAdsgramAd() {
-      if (dailyAdCount >= 10) {
-        alert('❌ Daily Limit Reached! You have watched 10/10 ads today. Please try again after 24 hours.');
-        return;
-      }
-
-      if (window.Adsgram) {
-        const AdController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
-        
-        AdController.show().then((result) => {
-          // User completed watching the ad
-          xp = Math.min(maxXP, xp + 5000);
-          dailyAdCount++;
-          
-          localStorage.setItem('shiba_daily_ad_count', dailyAdCount);
+        if (timeSpent >= 8) {
+          adProgressCount++;
+          if (adProgressCount >= 25) {
+            adProgressCount = 0; // Reset Count for next miner
+            activateNewMiner();
+            alert("🎉 CONGRATULATIONS!\n\nYou completed 25/25 Ads! Your SHIBA Miner is active for 5 minutes!");
+          } else {
+            alert(`✅ Ad Verified! Progress: ${adProgressCount}/25`);
+          }
           saveState();
           updateUI();
-          
-          alert('✅ Ad Completed! +5000 XP Added.');
-        }).catch((result) => {
-          // User skipped or error occurred
-          console.log("Ad status/error:", result);
-          alert('❌ Ad skipped or failed to load. Watch full ad to earn 5000 XP.');
-        });
+        } else {
+          alert("❌ Ad viewed for less than 8 seconds! Count not added.");
+        }
+      }
+    });
+
+    // ACTIVATE A NEW 5-MINUTE MINER
+    function activateNewMiner() {
+      const expiryTime = Date.now() + (5 * 60 * 1000); // 5 minutes from now
+      activeMiners.push(expiryTime);
+      saveState();
+      updateUI();
+    }
+
+    // MINING ENGINE RUNS EVERY 1 SECOND
+    function startMiningEngine() {
+      setInterval(() => {
+        const now = Date.now();
+        
+        // Remove expired miners
+        activeMiners = activeMiners.filter(expiry => expiry > now);
+        
+        const count = activeMiners.length;
+        if (count > 0) {
+          balance += count; // Add 1 Shiba per active miner every second
+          saveState();
+        }
+        
+        updateUI();
+      }, 1000);
+    }
+
+    function updateUI() {
+      balanceDisplay.innerText = balance.toLocaleString();
+      adCountDisplay.innerText = adProgressCount;
+      if (modalAdCountDisplay) modalAdCountDisplay.innerText = adProgressCount;
+      
+      const activeCount = activeMiners.length;
+      activeMinerCountDisplay.innerText = activeCount;
+
+      // Ring Glow Effect Toggle
+      if (activeCount > 0) {
+        glowRing.classList.remove('inactive');
+        glowRing.classList.add('active');
       } else {
-        alert('Adsgram SDK not initialized properly.');
+        glowRing.classList.remove('active');
+        glowRing.classList.add('inactive');
       }
     }
+
+    function saveState() {
+      localStorage.setItem('shiba_balance', balance);
+      localStorage.setItem('shiba_ad_progress_count', adProgressCount);
+      localStorage.setItem('shiba_active_miners', JSON.stringify(activeMiners));
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     function initTaskUI() {
       const taskBtn = document.getElementById('ton-task-btn');
@@ -583,7 +631,6 @@
 
     function handleTonTask() {
       const taskBtn = document.getElementById('ton-task-btn');
-
       if (tonTaskStatus === 'join') {
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
           window.Telegram.WebApp.openTelegramLink(TON_TASK_LINK);
@@ -600,7 +647,6 @@
         localStorage.setItem('shiba_ton_task_status', 'claimed');
         saveState();
         updateUI();
-
         taskBtn.innerText = 'Claimed';
         taskBtn.classList.add('claimed');
         taskBtn.onclick = null;
@@ -610,7 +656,6 @@
 
     function handleCryptoTask() {
       const cryptoBtn = document.getElementById('crypto-task-btn');
-
       if (cryptoTaskStatus === 'join') {
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
           window.Telegram.WebApp.openTelegramLink(CRYPTO_TASK_LINK);
@@ -627,7 +672,6 @@
         localStorage.setItem('shiba_crypto_task_status', 'claimed');
         saveState();
         updateUI();
-
         cryptoBtn.innerText = 'Claimed';
         cryptoBtn.classList.add('claimed');
         cryptoBtn.onclick = null;
@@ -637,7 +681,6 @@
 
     function handleWolfTask() {
       const wolfBtn = document.getElementById('wolf-task-btn');
-
       if (wolfTaskStatus === 'join') {
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
           window.Telegram.WebApp.openTelegramLink(WOLF_TASK_LINK);
@@ -654,7 +697,6 @@
         localStorage.setItem('shiba_wolf_task_status', 'claimed');
         saveState();
         updateUI();
-
         wolfBtn.innerText = 'Claimed';
         wolfBtn.classList.add('claimed');
         wolfBtn.onclick = null;
@@ -664,7 +706,6 @@
 
     function handleInsightTask() {
       const insightBtn = document.getElementById('insight-task-btn');
-
       if (insightTaskStatus === 'join') {
         if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
           window.Telegram.WebApp.openTelegramLink(INSIGHT_TASK_LINK);
@@ -681,41 +722,12 @@
         localStorage.setItem('shiba_insight_task_status', 'claimed');
         saveState();
         updateUI();
-
         insightBtn.innerText = 'Claimed';
         insightBtn.classList.add('claimed');
         insightBtn.onclick = null;
         alert('✅ Task Completed! +100 SHIBA Coins added.');
       }
     }
-
-    function updateUI() {
-      balanceDisplay.innerText = balance.toLocaleString();
-      energyDisplay.innerText = `${xp} / ${maxXP} XP`;
-      const percentage = (xp / maxXP) * 100;
-      energyBar.style.width = `${Math.min(100, Math.max(0, percentage))}%`;
-      adCountDisplay.innerText = dailyAdCount;
-    }
-
-    function saveState() {
-      localStorage.setItem('shiba_balance', balance);
-      localStorage.setItem('shiba_xp', xp);
-    }
-
-    function createFloatingText(e, text) {
-      const rect = tapBtn.getBoundingClientRect();
-      const floatText = document.createElement('div');
-      floatText.className = 'floating-text';
-      floatText.innerText = text;
-      floatText.style.left = `${e.clientX - rect.left}px`;
-      floatText.style.top = `${e.clientY - rect.top}px`;
-
-      tapBtn.appendChild(floatText);
-      setTimeout(() => floatText.remove(), 800);
-    }
-
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
 
     async function submitWithdrawal() {
       const binanceId = document.getElementById('binance-id-input').value.trim();
@@ -772,7 +784,6 @@
       fetchAdminRequests();
     }
 
-    // UPDATED Admin Fetch Function
     async function fetchAdminRequests() {
       const container = document.getElementById('admin-requests-list');
       container.innerHTML = '<div style="text-align:center; padding: 20px; color: #ff9500;">Connecting to Server... Please wait.</div>';
@@ -800,9 +811,8 @@
           return;
         }
 
-        // Safe Filter Logic
         const shibaOnlyRequests = requests.filter(req => {
-          if (!req.tokenType && !req.app) return true; // Safe fallback
+          if (!req.tokenType && !req.app) return true;
           const app = (req.tokenType || req.app || '').toString().toUpperCase();
           return app.includes('SHIBA') || app === ''; 
         });
