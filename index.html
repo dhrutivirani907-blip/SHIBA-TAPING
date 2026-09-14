@@ -1,1 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SHIBA INU MINING GAME</title>
+  
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #0A0203;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-grow: 1;
+    }
+
+    .balance-box {
+      width: 100%;
+      background: linear-gradient(135deg, rgba(139, 0, 0, 0.3) 0%, rgba(20, 0, 0, 0.8) 100%);
+      border: 1px solid #E50914;
+      border-radius: 16px;
+      padding: 14px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      box-shadow: 0 4px 20px rgba(229, 9, 20, 0.25);
+      margin-top: 10px;
+    }
+
+    .shiba-mini-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #E50914;
+    }
+
+    .balance-text {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      color: #FFFFFF;
+      text-shadow: 0 0 10px rgba(229, 9, 20, 0.5);
+    }
+
+    /* CENTER LOGO WITH GREEN GLOWING RING ANIMATION */
+    .tap-area {
+      position: relative;
+      margin: 30px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .shiba-avatar-container {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: radial-gradient(circle, #2B0003 0%, #0D0001 100%);
+    }
+
+    /* Rotating Ring Element */
+    .glow-ring {
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      right: -6px;
+      bottom: -6px;
+      border-radius: 50%;
+      border: 4px solid transparent;
+      transition: all 0.3s ease;
+      pointer-events: none;
+    }
+
+    /* Active Green Premium Ring State */
+    .glow-ring.active {
+      border-top-color: #00FF66;
+      border-right-color: #00FF66;
+      border-bottom-color: rgba(0, 255, 102, 0.2);
+      border-left-color: rgba(0, 255, 102, 0.2);
+      box-shadow: 0 0 25px rgba(0, 255, 102, 0.6), inset 0 0 15px rgba(0, 255, 102, 0.4);
+      animation: spinRing 2s linear infinite;
+    }
+
+    /* Default Inactive Ring State */
+    .glow-ring.inactive {
+      border: 3px solid rgba(229, 9, 20, 0.4);
+      box-shadow: 0 0 15px rgba(229, 9, 20, 0.2);
+    }
+
+    @keyframes spinRing {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .shiba-avatar-container img {
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ACTIVE MINER BOX */
+    .miner-info-box {
+      width: 100%;
+      background: #140204;
+      border: 1px solid rgba(0, 255, 102, 0.4);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      box-shadow: 0 0 10px rgba(0, 255, 102, 0.1);
+    }
+
+    .miner-info-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #A0A0A0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .miner-info-value {
+      font-size: 16px;
+      font-weight: 800;
+      color: #00FF66;
+      text-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
+    }
+
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+
+    .btn {
+      background: #140204;
+      border: 1px solid rgba(229, 9, 20, 0.4);
+      color: white;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:active { background: #2B0003; }
+
+    .btn-ads {
+      width: 100%;
+      background: linear-gradient(135deg, #E50914 0%, #8B0000 100%);
+      color: #ffffff;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+    }
+
+    .btn-ads:active { opacity: 0.9; }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.88);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: #120204;
+      border-radius: 20px;
+      padding: 24px;
+      width: 100%;
+      max-width: 380px;
+      border: 1px solid #E50914;
+      box-shadow: 0 0 25px rgba(229, 9, 20, 0.3);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .close-btn {
+      font-size: 24px;
+      color: #A0A0A0;
+      cursor: pointer;
+    }
+
+    .notice-box {
+      background: rgba(229, 9, 20, 0.1);
+      border: 1px dashed #E50914;
+      padding: 12px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: #FF8A8A;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .input-group {
+      margin-bottom: 16px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 12px;
+      color: #A0A0A0;
+      margin-bottom: 6px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      background: #1F0508;
+      border: 1px solid rgba(229, 9, 20, 0.3);
+      border-radius: 10px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .submit-btn {
+      width: 100%;
+      background: linear-gradient(135deg, #E50914 0%, #8B0000 100%);
+      color: white;
+      font-weight: bold;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .submit-btn:disabled {
+      background: #555555;
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .task-item {
+      background: #1A0306;
+      border: 1px solid rgba(229, 9, 20, 0.2);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .task-title { font-weight: bold; font-size: 14px; }
+    .task-reward { font-size: 12px; color: #E50914; margin-top: 2px; }
+
+    .task-action-btn {
+      background: #E50914;
+      color: #fff;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .task-action-btn.claimed {
+      background: #333;
+      color: #888;
+      cursor: default;
+    }
+
+    #admin-view {
+      display: none;
+      width: 100%;
+      max-width: 500px;
+      padding: 20px;
+    }
+
+    .admin-card {
+      background: #120204;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(229, 9, 20, 0.3);
+    }
+
+    .admin-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .user-id { font-weight: bold; color: #fff; }
+    .amount-display { font-size: 18px; font-weight: bold; color: #E50914; margin: 8px 0; }
+    .status-badge { font-size: 11px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; }
+    .status-badge.pending { background: rgba(255, 149, 0, 0.2); color: #ff9500; }
+    .status-badge.approved, .status-badge.Approved { background: rgba(52, 199, 89, 0.2); color: #34C759; }
+    .status-badge.rejected, .status-badge.Rejected { background: rgba(255, 59, 48, 0.2); color: #ff3b30; }
+
+    .admin-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .approve-btn { background: #34C759; color: #000; }
+    .reject-btn { background: #ff3b30; color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- MAIN USER VIEW -->
+  <div id="user-view" class="app-container">
+    <div class="balance-box">
+      <img src="photo_2026-09-11_20-06-06.jpg" alt="SHIBA" class="shiba-mini-logo">
+      <span class="balance-text" id="balance-display">0</span>
+    </div>
+
+    <!-- LOGO WITH ROTATING GLOW RING -->
+    <div class="tap-area">
+      <div class="shiba-avatar-container">
+        <div id="glow-ring" class="glow-ring inactive"></div>
+        <img src="photo_2026-09-11_20-06-06.jpg" alt="SHIBA INU">
+      </div>
+    </div>
+
+    <!-- TOTAL ACTIVE MINERS DISPLAY -->
+    <div class="miner-info-box">
+      <div class="miner-info-title">
+        <span>⛏️ Total Active Miner:</span>
+      </div>
+      <div class="miner-info-value" id="active-miner-count">0</div>
+    </div>
+
+    <div class="actions-grid">
+      <button class="btn" onclick="openModal('withdraw-modal')">💸 Withdraw</button>
+      <button class="btn" onclick="openModal('task-modal')">🎯 Task</button>
+    </div>
+
+    <button class="btn-ads" id="ad-btn" onclick="openModal('ad-prompt-modal')">🎬 Watch 25 Ads Unlock Miner (<span id="ad-count">0</span>/25)</button>
+  </div>
+
+  <!-- AD PROMPT MODAL -->
+  <div class="modal" id="ad-prompt-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Watch Ad to Unlock (<span id="modal-ad-count">0</span>/25)</h3>
+        <span class="close-btn" onclick="closeModal('ad-prompt-modal')">&times;</span>
+      </div>
+      <div class="notice-box">
+        ⚠️ Watch ad minimum 8 seconds. Agar 8 seconds se pehle wapas aaye toh count nahi hoga!
+      </div>
+      <button class="submit-btn" onclick="watchAdsterraAd()">🎬 Watch Ad Now</button>
+    </div>
+  </div>
+
+  <!-- TASK MODAL -->
+  <div class="modal" id="task-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Tasks</h3>
+        <span class="close-btn" onclick="closeModal('task-modal')">&times;</span>
+      </div>
+      <div class="task-item">
+        <div>
+          <div class="task-title">TON Reffer</div>
+          <div class="task-reward">+100 SHIBA</div>
+        </div>
+        <button id="ton-task-btn" class="task-action-btn" onclick="handleTonTask()">Join Now</button>
+      </div>
+      <div class="task-item">
+        <div>
+          <div class="task-title">Crypto Income</div>
+          <div class="task-reward">+100 SHIBA</div>
+        </div>
+        <button id="crypto-task-btn" class="task-action-btn" onclick="handleCryptoTask()">Join Now</button>
+      </div>
+      <div class="task-item">
+        <div>
+          <div class="task-title">Wolf Rush</div>
+          <div class="task-reward">+100 SHIBA</div>
+        </div>
+        <button id="wolf-task-btn" class="task-action-btn" onclick="handleWolfTask()">Join Now</button>
+      </div>
+      <div class="task-item">
+        <div>
+          <div class="task-title">𝗜𝗡𝗦𝗜𝗚𝗛𝗧 𝗪𝗜𝗧𝗛 𝗖𝗥𝗬𝗣𝗧𝗢</div>
+          <div class="task-reward">+100 SHIBA</div>
+        </div>
+        <button id="insight-task-btn" class="task-action-btn" onclick="handleInsightTask()">Join Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WITHDRAW MODAL -->
+  <div class="modal" id="withdraw-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Withdraw SHIBA</h3>
+        <span class="close-btn" onclick="closeModal('withdraw-modal')">&times;</span>
+      </div>
+      <div class="input-group">
+        <label>Binance Pay ID / Wallet</label>
+        <input type="text" id="binance-id-input" placeholder="Enter Binance Pay ID">
+      </div>
+      <div class="input-group">
+        <label>Amount (SHIBA Tokens)</label>
+        <input type="number" id="withdraw-amount-input" placeholder="Min 1,000 SHIBA">
+      </div>
+      <button class="submit-btn" onclick="submitWithdrawal()">Submit Request</button>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL VIEW -->
+  <div id="admin-view">
+    <h2 style="margin-bottom: 20px; text-align: center; color: #E50914;">SHIBA Withdrawal Requests</h2>
+    <div id="admin-requests-list">Loading...</div>
+  </div>
+
+  <script>
+    if (window.Telegram && window.Telegram.WebApp) {
+      window.Telegram.WebApp.ready();
+      window.Telegram.WebApp.expand();
+    }
+
+    const BACKEND_URL = "https://pepe-backend-wkym.onrender.com";
+    const TON_TASK_LINK = "https://t.me/AutoPayGramPayBot?start=1912015558";
+    const CRYPTO_TASK_LINK = "https://t.me/+gZEl6wYrSPY3YzRl";
+    const WOLF_TASK_LINK = "https://t.me/WolfRush_bot/wolf_rush_earn?startapp=8505916897";
+    const INSIGHT_TASK_LINK = "https://t.me/Crypto_Insight_BD49";
+
+    const ADSTERRA_DIRECT_LINK = "https://www.profitableratecpmnetwork.com/mag701y1?key=e6dcf81d34580abdf64766ac0be7e76d";
+
+    let balance = Number(localStorage.getItem('shiba_balance')) || 0;
+    let adProgressCount = Number(localStorage.getItem('shiba_ad_progress_count')) || 0;
+    
+    // Active Miners Array storing expiry timestamps
+    let activeMiners = JSON.parse(localStorage.getItem('shiba_active_miners')) || [];
+
+    let tonTaskStatus = localStorage.getItem('shiba_ton_task_status') || 'join';
+    let cryptoTaskStatus = localStorage.getItem('shiba_crypto_task_status') || 'join';
+    let wolfTaskStatus = localStorage.getItem('shiba_wolf_task_status') || 'join';
+    let insightTaskStatus = localStorage.getItem('shiba_insight_task_status') || 'join';
+
+    const balanceDisplay = document.getElementById('balance-display');
+    const adCountDisplay = document.getElementById('ad-count');
+    const modalAdCountDisplay = document.getElementById('modal-ad-count');
+    const activeMinerCountDisplay = document.getElementById('active-miner-count');
+    const glowRing = document.getElementById('glow-ring');
+
+    let adStartTime = 0;
+    let isSubmitting = false; // Flag to prevent multi-click issue
+
+    updateUI();
+    initTaskUI();
+    startMiningEngine();
+
+    // ADSTERRA DIRECT LINK WATCH LOGIC
+    function watchAdsterraAd() {
+      adStartTime = Date.now();
+      window.open(ADSTERRA_DIRECT_LINK, '_blank');
+      closeModal('ad-prompt-modal');
+    }
+
+    // CHECK TIME WHEN USER RETURNS TO TAB/APP
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && adStartTime > 0) {
+        const timeSpent = (Date.now() - adStartTime) / 1000;
+        adStartTime = 0; // Reset timer
+
+        if (timeSpent >= 8) {
+          adProgressCount++;
+          if (adProgressCount >= 25) {
+            adProgressCount = 0; // Reset Count for next miner
+            activateNewMiner();
+            alert("🎉 CONGRATULATIONS!\n\nYou completed 25/25 Ads! Your SHIBA Miner is active for 5 minutes!");
+          } else {
+            alert(`✅ Ad Verified! Progress: ${adProgressCount}/25`);
+          }
+          saveState();
+          updateUI();
+        } else {
+          alert("❌ Ad viewed for less than 8 seconds! Count not added.");
+        }
+      }
+    });
+
+    // ACTIVATE A NEW 5-MINUTE MINER
+    function activateNewMiner() {
+      const expiryTime = Date.now() + (5 * 60 * 1000); // 5 minutes from now
+      activeMiners.push(expiryTime);
+      saveState();
+      updateUI();
+    }
+
+    // MINING ENGINE RUNS EVERY 1 SECOND
+    function startMiningEngine() {
+      setInterval(() => {
+        const now = Date.now();
+        
+        // Remove expired miners
+        activeMiners = activeMiners.filter(expiry => expiry > now);
+        
+        const count = activeMiners.length;
+        if (count > 0) {
+          balance += count; // Add 1 Shiba per active miner every second
+          saveState();
+        }
+        
+        updateUI();
+      }, 1000);
+    }
+
+    function updateUI() {
+      balanceDisplay.innerText = balance.toLocaleString();
+      adCountDisplay.innerText = adProgressCount;
+      if (modalAdCountDisplay) modalAdCountDisplay.innerText = adProgressCount;
+      
+      const activeCount = activeMiners.length;
+      activeMinerCountDisplay.innerText = activeCount;
+
+      // Ring Glow Effect Toggle
+      if (activeCount > 0) {
+        glowRing.classList.remove('inactive');
+        glowRing.classList.add('active');
+      } else {
+        glowRing.classList.remove('active');
+        glowRing.classList.add('inactive');
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('shiba_balance', balance);
+      localStorage.setItem('shiba_ad_progress_count', adProgressCount);
+      localStorage.setItem('shiba_active_miners', JSON.stringify(activeMiners));
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function initTaskUI() {
+      const taskBtn = document.getElementById('ton-task-btn');
+      if (tonTaskStatus === 'claim') {
+        taskBtn.innerText = 'Claim';
+        taskBtn.style.background = '#FF9500';
+      } else if (tonTaskStatus === 'claimed') {
+        taskBtn.innerText = 'Claimed';
+        taskBtn.classList.add('claimed');
+        taskBtn.onclick = null;
+      }
+
+      const cryptoBtn = document.getElementById('crypto-task-btn');
+      if (cryptoTaskStatus === 'claim') {
+        cryptoBtn.innerText = 'Claim';
+        cryptoBtn.style.background = '#FF9500';
+      } else if (cryptoTaskStatus === 'claimed') {
+        cryptoBtn.innerText = 'Claimed';
+        cryptoBtn.classList.add('claimed');
+        cryptoBtn.onclick = null;
+      }
+
+      const wolfBtn = document.getElementById('wolf-task-btn');
+      if (wolfTaskStatus === 'claim') {
+        wolfBtn.innerText = 'Claim';
+        wolfBtn.style.background = '#FF9500';
+      } else if (wolfTaskStatus === 'claimed') {
+        wolfBtn.innerText = 'Claimed';
+        wolfBtn.classList.add('claimed');
+        wolfBtn.onclick = null;
+      }
+
+      const insightBtn = document.getElementById('insight-task-btn');
+      if (insightTaskStatus === 'claim') {
+        insightBtn.innerText = 'Claim';
+        insightBtn.style.background = '#FF9500';
+      } else if (insightTaskStatus === 'claimed') {
+        insightBtn.innerText = 'Claimed';
+        insightBtn.classList.add('claimed');
+        insightBtn.onclick = null;
+      }
+    }
+
+    function handleTonTask() {
+      const taskBtn = document.getElementById('ton-task-btn');
+      if (tonTaskStatus === 'join') {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(TON_TASK_LINK);
+        } else {
+          window.open(TON_TASK_LINK, '_blank');
+        }
+        tonTaskStatus = 'claim';
+        localStorage.setItem('shiba_ton_task_status', 'claim');
+        taskBtn.innerText = 'Claim';
+        taskBtn.style.background = '#FF9500';
+      } else if (tonTaskStatus === 'claim') {
+        balance += 100;
+        tonTaskStatus = 'claimed';
+        localStorage.setItem('shiba_ton_task_status', 'claimed');
+        saveState();
+        updateUI();
+        taskBtn.innerText = 'Claimed';
+        taskBtn.classList.add('claimed');
+        taskBtn.onclick = null;
+        alert('✅ Task Completed! +100 SHIBA Coins added.');
+      }
+    }
+
+    function handleCryptoTask() {
+      const cryptoBtn = document.getElementById('crypto-task-btn');
+      if (cryptoTaskStatus === 'join') {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(CRYPTO_TASK_LINK);
+        } else {
+          window.open(CRYPTO_TASK_LINK, '_blank');
+        }
+        cryptoTaskStatus = 'claim';
+        localStorage.setItem('shiba_crypto_task_status', 'claim');
+        cryptoBtn.innerText = 'Claim';
+        cryptoBtn.style.background = '#FF9500';
+      } else if (cryptoTaskStatus === 'claim') {
+        balance += 100;
+        cryptoTaskStatus = 'claimed';
+        localStorage.setItem('shiba_crypto_task_status', 'claimed');
+        saveState();
+        updateUI();
+        cryptoBtn.innerText = 'Claimed';
+        cryptoBtn.classList.add('claimed');
+        cryptoBtn.onclick = null;
+        alert('✅ Task Completed! +100 SHIBA Coins added.');
+      }
+    }
+
+    function handleWolfTask() {
+      const wolfBtn = document.getElementById('wolf-task-btn');
+      if (wolfTaskStatus === 'join') {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(WOLF_TASK_LINK);
+        } else {
+          window.open(WOLF_TASK_LINK, '_blank');
+        }
+        wolfTaskStatus = 'claim';
+        localStorage.setItem('shiba_wolf_task_status', 'claim');
+        wolfBtn.innerText = 'Claim';
+        wolfBtn.style.background = '#FF9500';
+      } else if (wolfTaskStatus === 'claim') {
+        balance += 100;
+        wolfTaskStatus = 'claimed';
+        localStorage.setItem('shiba_wolf_task_status', 'claimed');
+        saveState();
+        updateUI();
+        wolfBtn.innerText = 'Claimed';
+        wolfBtn.classList.add('claimed');
+        wolfBtn.onclick = null;
+        alert('✅ Task Completed! +100 SHIBA Coins added.');
+      }
+    }
+
+    function handleInsightTask() {
+      const insightBtn = document.getElementById('insight-task-btn');
+      if (insightTaskStatus === 'join') {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+          window.Telegram.WebApp.openTelegramLink(INSIGHT_TASK_LINK);
+        } else {
+          window.open(INSIGHT_TASK_LINK, '_blank');
+        }
+        insightTaskStatus = 'claim';
+        localStorage.setItem('shiba_insight_task_status', 'claim');
+        insightBtn.innerText = 'Claim';
+        insightBtn.style.background = '#FF9500';
+      } else if (insightTaskStatus === 'claim') {
+        balance += 100;
+        insightTaskStatus = 'claimed';
+        localStorage.setItem('shiba_insight_task_status', 'claimed');
+        saveState();
+        updateUI();
+        insightBtn.innerText = 'Claimed';
+        insightBtn.classList.add('claimed');
+        insightBtn.onclick = null;
+        alert('✅ Task Completed! +100 SHIBA Coins added.');
+      }
+    }
+
+    async function submitWithdrawal() {
+      if (isSubmitting) return; // Prevent extra clicks
+
+      const binanceId = document.getElementById('binance-id-input').value.trim();
+      const amount = parseInt(document.getElementById('withdraw-amount-input').value);
+      const submitBtn = document.querySelector('#withdraw-modal .submit-btn');
+
+      if (!binanceId) return alert('Please enter Binance Pay ID');
+      if (!amount || amount < 1000) return alert('Minimum withdrawal is 1,000 SHIBA');
+      if (amount > balance) return alert('Insufficient balance!');
+
+      // Lock UI and button
+      isSubmitting = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Processing...';
+      }
+
+      let userId = localStorage.getItem('user_id');
+      if (!userId) {
+        userId = 'USER_' + Math.floor(100000 + Math.random() * 900000);
+        localStorage.setItem('user_id', userId);
+      }
+
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/withdraw`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: userId,
+            binanceId: binanceId,
+            wallet: binanceId,
+            amount: amount,
+            tokenType: 'SHIBA',
+            app: 'SHIBA'
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success || response.ok) {
+          balance -= amount;
+          saveState();
+          updateUI();
+          closeModal('withdraw-modal');
+          alert('✅ SHIBA withdrawal request submitted successfully!');
+          document.getElementById('binance-id-input').value = '';
+          document.getElementById('withdraw-amount-input').value = '';
+        } else {
+          alert('Error: ' + (data.message || 'Submission failed'));
+        }
+      } catch (error) {
+        console.error("Submit error:", error);
+        alert('Server Connection Error');
+      } finally {
+        // Unlock button after completion
+        isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = 'Submit Request';
+        }
+      }
+    }
+
+    // Admin Panel Route
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('admin') === 'true') {
+      document.getElementById('user-view').style.display = 'none';
+      document.getElementById('admin-view').style.display = 'block';
+      fetchAdminRequests();
+    }
+
+    async function fetchAdminRequests() {
+      const container = document.getElementById('admin-requests-list');
+      container.innerHTML = '<div style="text-align:center; padding: 20px; color: #ff9500;">Connecting to Server... Please wait.</div>';
+
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+        const res = await fetch(`${BACKEND_URL}/api/withdrawals`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          throw new Error(`Server status: ${res.status}`);
+        }
+
+        const requests = await res.json();
+        
+        if (!Array.isArray(requests)) {
+          container.innerText = 'No valid data received.';
+          return;
+        }
+
+        const shibaOnlyRequests = requests.filter(req => {
+          if (!req.tokenType && !req.app) return true;
+          const app = (req.tokenType || req.app || '').toString().toUpperCase();
+          return app.includes('SHIBA') || app === ''; 
+        });
+
+        renderAdminRequests(shibaOnlyRequests);
+      } catch (err) {
+        console.error("Fetch Admin Error:", err);
+        if (err.name === 'AbortError') {
+          container.innerHTML = `<div style="color: #ff3b30; text-align: center; padding: 20px;">
+            <b>Server Timeout!</b><br>Render Backend starting me time le raha hai. Ek baar page Refresh karein.
+          </div>`;
+        } else {
+          container.innerHTML = `<div style="color: #ff3b30; text-align: center; padding: 20px;">
+            <b>Connection Error!</b><br>Failed to fetch data: ${err.message}
+          </div>`;
+        }
+      }
+    }
+
+    function renderAdminRequests(requests) {
+      const container = document.getElementById('admin-requests-list');
+      
+      if (!requests || requests.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color: #A0A0A0;">No pending SHIBA requests</div>';
+        return;
+      }
+
+      container.innerHTML = requests.map(req => {
+        const reqId = req._id || req.id;
+        const walletDisplay = req.binanceId || req.wallet || req.binance_id || 'N/A';
+        const currentStatus = req.status || 'Pending';
+
+        return `
+          <div class="admin-card">
+            <div class="admin-card-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="user-id">ID: ${walletDisplay}</span>
+                <span style="background-color: #E50914; color: #fff; font-size: 11px; font-weight: bold; padding: 2px 8px; border-radius: 6px;">
+                  SHIBA
+                </span>
+              </div>
+              <span class="status-badge ${currentStatus.toLowerCase()}">${currentStatus}</span>
+            </div>
+            
+            <div class="amount-display">${Number(req.amount).toLocaleString()} SHIBA</div>
+            
+            ${currentStatus.toLowerCase() === 'pending' ? `
+              <div class="admin-actions">
+                <button class="action-btn approve-btn" onclick="updateStatus('${reqId}', 'Approved')">✓ Approve</button>
+                <button class="action-btn reject-btn" onclick="updateStatus('${reqId}', 'Rejected')">✕ Reject</button>
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function updateStatus(id, newStatus) {
+      if (!id || id === 'undefined') {
+        alert("Error: Invalid Request ID!");
+        return;
+      }
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/withdrawals/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+          alert(`✅ Status updated to ${newStatus}`);
+          fetchAdminRequests();
+        } else {
+          alert("Server Error: Unable to update status.");
+        }
+      } catch (e) {
+        console.error("Update error:", e);
+        alert("Network Error while updating status.");
+      }
+    }
+  </script>
+</body>
+</html>
